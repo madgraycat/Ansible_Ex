@@ -1,0 +1,80 @@
+---
+- name: install git
+  hosts: test
+  become: yes
+  tasks:
+    - name: git is present
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+- name: create dir for project
+  hosts: test
+  become: yes
+  tasks:
+  - name: create dir
+    file:
+      path: /tmp/app_data
+      state: directory
+
+- name: git clone project
+  hosts: test
+  become: yes
+  tasks:
+    - name: git clone
+      git:
+        repo: https://github.com/boxfuse/boxfuse-sample-java-war-hello.git
+        dest: /tmp/app_data
+
+- name: install maven
+  hosts: test
+  become: yes
+  tasks:
+    - name: maven is present
+      apt:
+        name: maven
+        state: latest
+        update_cache: yes
+
+- name: install java
+  hosts: test
+  become: yes
+  tasks:
+    - name: install java
+      apt:
+        name: default-jdk
+        state: present
+
+- name: install tomcat
+  hosts: test
+  become: yes
+  tasks:
+    - name: Tomcat is present
+      apt:
+        name: tomcat8
+        state: present
+        update_cache: yes
+
+    - name: Tomcat is running
+      service:
+        name: tomcat8
+        state: started
+
+- name: create and copy artefact
+  hosts: test
+  become: yes
+  tasks:
+    - name: create artefact
+      shell:
+        mvn package -f /tmp/app_data
+
+- name: copy artefact
+  hosts: test
+  tasks:
+    - name: copy artefact
+      copy:
+        src: /tmp/app_data/target/hello-1.0.war
+        dest: /var/lib/tomcat8/webapps/
+        remote_src: yes
+
